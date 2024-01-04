@@ -104,14 +104,14 @@ MDFLAGS_WIN32    = $(MDFLAGS)
 # SOURCE FILE LISTS
 # ==============================================================================
 
-CFILES          := $(shell find "$(SRCDIR)" -name "*.c" -not -path "$(SYSDIR)/*")
+CFILES          := $(shell find "$(SRCDIR)" -name "*.c" -not -path "$(SYSDIR)/*" 2>/dev/null)
 CFILES_LINUX    := $(CFILES) $(shell find "$(SYSDIR)/$(LINUX)" -name "*.c" 2>/dev/null)
 CFILES_WIN32    := $(CFILES) $(shell find "$(SYSDIR)/$(WIN32)" -name "*.c" 2>/dev/null)
-CXXFILES        := $(shell find "$(SRCDIR)" -name "*.cpp" -not -path "$(SYSDIR)/*")
+CXXFILES        := $(shell find "$(SRCDIR)" -name "*.cpp" -not -path "$(SYSDIR)/*" 2>/dev/null)
 CXXFILES_LINUX  := $(CXXFILES) $(shell find "$(SYSDIR)/$(LINUX)" -name "*.cpp" 2>/dev/null)
 CXXFILES_WIN32  := $(CXXFILES) $(shell find "$(SYSDIR)/$(WIN32)" -name "*.cpp" 2>/dev/null)
-TMPDIRS         := $(patsubst %,$(TMPDIR)/$(WIN32)/%, $(shell find $(SRCDIR) -type d))
-TMPDIRS         += $(patsubst %,$(TMPDIR)/$(LINUX)/%, $(shell find $(SRCDIR) -type d))
+TMPDIRS         := $(patsubst %,$(TMPDIR)/$(WIN32)/%, $(shell find $(SRCDIR) -type d 2>/dev/null))
+TMPDIRS         += $(patsubst %,$(TMPDIR)/$(LINUX)/%, $(shell find $(SRCDIR) -type d 2>/dev/null))
 
 # Use CC if there are no C++ sources
 ifeq ($(strip $(CXXFILES_LINUX)),)
