@@ -17,10 +17,10 @@ $(error Please run ./configure first.)
 endif
 
 include .settings.mk
-ifeq ($(OS), WIN32)
+ifeq ($(OS),WIN32)
 # Windows with WSL
 endif
-ifeq ($(OS), LINUX)
+ifeq ($(OS),LINUX)
 # Native Linux
 endif
 
@@ -46,7 +46,7 @@ LINUX           := linux
 WIN32           := win32
 BINDIR          := bin
 DATADIR         := data
-TMPDIR          := .build
+TMPDIR          := build
 
 # ==============================================================================
 # TOOLCHAIN GENERAL SETTINGS
@@ -105,11 +105,11 @@ MDFLAGS_WIN32    = $(MDFLAGS)
 # ==============================================================================
 
 CFILES          := $(shell find "$(SRCDIR)" -name "*.c" -not -path "$(SYSDIR)/*")
-CFILES_LINUX    := $(CFILES) $(shell find "$(SYSDIR)/$(LINUX)" -name "*.c")
-CFILES_WIN32    := $(CFILES) $(shell find "$(SYSDIR)/$(WIN32)" -name "*.c")
+CFILES_LINUX    := $(CFILES) $(shell find "$(SYSDIR)/$(LINUX)" -name "*.c" 2>/dev/null)
+CFILES_WIN32    := $(CFILES) $(shell find "$(SYSDIR)/$(WIN32)" -name "*.c" 2>/dev/null)
 CXXFILES        := $(shell find "$(SRCDIR)" -name "*.cpp" -not -path "$(SYSDIR)/*")
-CXXFILES_LINUX  := $(CXXFILES) $(shell find "$(SYSDIR)/$(LINUX)" -name "*.cpp")
-CXXFILES_WIN32  := $(CXXFILES) $(shell find "$(SYSDIR)/$(WIN32)" -name "*.cpp")
+CXXFILES_LINUX  := $(CXXFILES) $(shell find "$(SYSDIR)/$(LINUX)" -name "*.cpp" 2>/dev/null)
+CXXFILES_WIN32  := $(CXXFILES) $(shell find "$(SYSDIR)/$(WIN32)" -name "*.cpp" 2>/dev/null)
 TMPDIRS         := $(patsubst %,$(TMPDIR)/$(WIN32)/%, $(shell find $(SRCDIR) -type d))
 TMPDIRS         += $(patsubst %,$(TMPDIR)/$(LINUX)/%, $(shell find $(SRCDIR) -type d))
 
@@ -139,17 +139,17 @@ DEPFILES_WIN32  += $(CXXFILES_WIN32:%.cpp=$(TMPDIR)/$(WIN32)/%.d)
 # ==============================================================================
 
 define LINK
-$(E) "[LD] $@"; $(MKDIR) $(@D)
+$(E) "[BIN] $@"; $(MKDIR) $(@D)
 $(Q) $(LD_$(1)) -o $@ $(LDFLAGS_$(1)) $(OBJFILES_$(1)) $(LDLIBS_$(1))
 endef
 
 define COMPILE
-$(E) "[$(1)] $<"
+$(E) "[OBJ] $@"
 $(Q) $($(1)_$(2)) -c -o $@ $($(3)_$(2)) $(CPPFLAGS_$(2)) $<
 endef
 
 define MAKEDEP
-$(E) "[MD] $<"
+$(E) "[DEP] $@"
 $(Q) $($(1)_$(2)) -c -o $@ $(CPPFLAGS_$(2)) $(MDFLAGS_$(2)) $<
 endef
 
@@ -160,21 +160,21 @@ endef
 .PHONY: all
 all: release
 
-$(TARGET_WIN32): $(OBJFILES_WIN32) $(DEPFILES_WIN32)
+$(TARGET_WIN32): $(OBJFILES_WIN32) $(DEPFILES_WIN32) | $(SRCDIR) $(BINDIR)
 	$(call LINK,WIN32)
 
-$(TARGET_LINUX): $(OBJFILES_LINUX) $(DEPFILES_LINUX)
+$(TARGET_LINUX): $(OBJFILES_LINUX) $(DEPFILES_LINUX) | $(SRCDIR) $(BINDIR)
 	$(call LINK,LINUX)
 
-# ======================================================================
+# ==============================================================================
 # PATTERN RULES
-# ======================================================================
+# ==============================================================================
 
-# Must expand the prerequisite lists a second time to resolve the path
-# variable $(@D). This means folders can be set as explicit dependencies
-# and created in the $TMPDIRS rule. This is better than relying on Make
-# to honor the order of prerequisites for the primary target and we will
-# not have to call mkdir for each build step preemptively.
+# Must expand the prerequisite lists a second time to resolve the path variable
+# $(@D). This means folders can be set as explicit dependencies and created in
+# the $TMPDIRS rule. This is better than relying on Make to honor the order of
+# prerequisites for the primary target and we will not have to call mkdir for
+# each build step preemptively.
 
 .SECONDEXPANSION:
 
@@ -199,7 +199,11 @@ $(TMPDIR)/$(WIN32)/%.d: %.cpp | $$(@D)
 # DIRECTORY TARGETS LIST
 # ======================================================================
 
+$(SRCDIR)  \
+$(BINDIR)  \
+$(DATADIR) \
 $(TMPDIRS):
+	$(E) "[DIR] $@"
 	$(Q) $(MKDIR) $@
 
 # ======================================================================
@@ -209,11 +213,11 @@ $(TMPDIRS):
 .PHONY: release
 release: $(RELEASE_LINUX) $(RELEASE_WIN32)
 
-$(RELEASE_LINUX): $(TARGET_LINUX)
+$(RELEASE_LINUX): $(TARGET_LINUX) | $(DATADIR)
 	$(E) "[TAR] $(RELEASE_LINUX)"
 	$(Q) $(TAR) -cf $(RELEASE_LINUX) $(DATADIR) -C $(BINDIR)/$(LINUX) .
 
-$(RELEASE_WIN32): $(TARGET_WIN32)
+$(RELEASE_WIN32): $(TARGET_WIN32) | $(DATADIR)
 	$(E) "[TAR] $(RELEASE_WIN32)"
 	$(Q) $(TAR) -cf $(RELEASE_WIN32) $(DATADIR) -C $(BINDIR)/$(WIN32) .
 
@@ -227,22 +231,22 @@ install: $(TARGET_LINUX) $(TARGET_WIN32)
 
 .PHONY: clean
 clean:
-	$(E) "[RM] $(TARGET_LINUX)"
+	$(E) "[REM] $(TARGET_LINUX)"
 	$(Q) $(RM) $(TARGET_LINUX)
-	$(E) "[RM] $(TARGET_WIN32)"
+	$(E) "[REM] $(TARGET_WIN32)"
 	$(Q) $(RM) $(TARGET_WIN32)
-	$(E) "[RM] $(RELEASE_LINUX)"
+	$(E) "[REM] $(RELEASE_LINUX)"
 	$(Q) $(RM) $(RELEASE_LINUX)
-	$(E) "[RM] $(RELEASE_WIN32)"
+	$(E) "[REM] $(RELEASE_WIN32)"
 	$(Q) $(RM) $(RELEASE_WIN32)
-	$(E) "[RM] $(TMPDIR)"
+	$(E) "[REM] $(TMPDIR)"
 	$(Q) $(RM) -r $(TMPDIR)
 
 .PHONY: distclean
 distclean: clean
-	$(E) "[RM] $(BINDIR)"
+	$(E) "[REM] $(BINDIR)"
 	$(Q) $(RM) -r $(BINDIR)
-	$(E) "[RM] .settings.mk"
+	$(E) "[REM] .settings.mk"
 	$(Q) $(RM) .settings.mk
 
 # ======================================================================

@@ -18,12 +18,12 @@ EXPORT=$ROOTDIR/.settings.mk
 rm -f "$EXPORT"
 
 if [ "$(uname -m)" != x86_64 ]; then
-	echo "[SH] Error: 64-bit operating system required."
+	echo "[CFG] Error: 64-bit operating system required."
 	exit 1
 fi
 
 if ! command -v dpkg apt &> /dev/null; then
-	echo "[SH] Error: Debian-based distribution required."
+	echo "[CFG] Error: Debian-based distribution required."
 	exit 1
 fi
 
@@ -35,10 +35,10 @@ fi
 
 mkdir -p "$LIBDIR"
 cp -f "$GCCDIR"/{libgcc_s_seh-1,libstdc++-6}.dll "$LIBDIR"
-echo "[SH] Copied required runtime libraries."
+echo "[CFG] Copied required runtime libraries."
 
 OS=WIN32; grep -iq microsoft /proc/version || OS=LINUX
-echo "[SH] Saving build settings to '$EXPORT'."
+echo "[CFG] Saving build settings to '$EXPORT'."
 
 # Settings for Make
 cat <<EOF > $EXPORT
@@ -46,4 +46,4 @@ OS := $OS
 EOF
 
 # XXX: Call required scripts and export settings.
-echo "[SH] Build configuration was successful."
+echo "[CFG] Build configuration was successful."
