@@ -1,0 +1,32 @@
+#!/bin/bash
+
+set -e
+
+# Build Configuration Script
+# Written by Leon Krieg <info@madcow.dev>
+
+# Run this script before invoking make to setup the environment
+# according to your current operating system and architecture. You
+# only need to run it once after a fresh clone. Build settings for
+# install prefix and features will be added as command-line flags.
+
+ROOTDIR=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")
+TESTFILE=$ROOTDIR/.is_configured
+
+rm -f "$TESTFILE"
+
+if [ "$(uname -m)" != x86_64 ]; then
+	echo "[SH] Error: 64-bit operating system required."
+	exit 1
+fi
+
+if ! command -v dpkg apt &> /dev/null; then
+	echo "[SH] Error: Debian-based distribution required."
+	exit 1
+fi
+
+# Nothing to do yet!
+# Call setup scripts here.
+
+touch "$TESTFILE"
+echo "[SH] Build configuration was successful."
