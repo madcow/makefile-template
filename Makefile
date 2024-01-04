@@ -16,7 +16,7 @@
 # PROJECT SETTINGS
 # ==============================================================================
 
-# PROJECT       Project identifier name.
+# PROJECT       Project identifier.
 # VERBOSE       Show full text for every command?
 # SRCDIR        Location of C and C++ source files.
 # SYSDIR        Location of platform-dependend source files.

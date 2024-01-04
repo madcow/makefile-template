@@ -2,15 +2,17 @@
 
 set -e
 
-# Build Configuration Script
+# Configuration Script
 # Written by Leon Krieg <info@madcow.dev>
 
-# Run this script before invoking make to setup the environment
-# according to your current operating system and architecture. You
-# only need to run it once after a fresh clone. Build settings for
-# install prefix and features will be added as command-line flags.
+# Run this script before invoking make to setup the environment according to
+# your current operating system and architecture. You only need to run it once
+# after a fresh clone. Build settings for install prefix and features will be
+# added as command-line flags later on.
 
 ROOTDIR=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")
+GCCDIR=/usr/lib/gcc/x86_64-w64-mingw32/12-win32
+LIBDIR=$ROOTDIR/bin/win32
 TESTFILE=$ROOTDIR/.is_configured
 
 rm -f "$TESTFILE"
@@ -25,8 +27,17 @@ if ! command -v dpkg apt &> /dev/null; then
 	exit 1
 fi
 
-# Nothing to do yet!
-# Call setup scripts here.
+# For windows targets we distribute the libgcc and libstdc++ runtime libraries.
+# The sources are made available by the GNU project at https://gcc.gnu.org/git.
+# The GCC Runtime Library Exception covers our use for either static or dynamic
+# linking with both libraries as long as we provide those source files and the
+# terms of the GPLv3 will not extend to our own files.
+
+mkdir -p "$LIBDIR"
+cp -f "$GCCDIR"/{libgcc_s_seh-1,libstdc++-6}.dll "$LIBDIR"
+echo "[SH] Copied required runtime libraries."
+
+# XXX: Call any configuration scripts here.
 
 touch "$TESTFILE"
 echo "[SH] Build configuration was successful."
