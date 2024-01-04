@@ -12,6 +12,18 @@
 # placed in TMPDIR and dependencies from included headers are generated using
 # the preprocessor. Run 'make release' to create tarballs for all systems.
 
+ifeq ($(wildcard .settings.mk),)
+$(error Please run ./configure first.)
+endif
+
+include .settings.mk
+ifeq ($(OS), WIN32)
+# Windows with WSL
+endif
+ifeq ($(OS), LINUX)
+# Native Linux
+endif
+
 # ==============================================================================
 # PROJECT SETTINGS
 # ==============================================================================
@@ -230,8 +242,8 @@ clean:
 distclean: clean
 	$(E) "[RM] $(BINDIR)"
 	$(Q) $(RM) -r $(BINDIR)
-	$(E) "[RM] .is_configured"
-	$(Q) $(RM) .is_configured
+	$(E) "[RM] .settings.mk"
+	$(Q) $(RM) .settings.mk
 
 # ======================================================================
 # PREPROCESSOR INCLUDES AND CONDITIONALS
@@ -239,9 +251,6 @@ distclean: clean
 
 include $(wildcard $(DEPFILES_LINUX))
 include $(wildcard $(DEPFILES_WIN32))
-ifeq (,$(wildcard .is_configured))
-$(error Please run ./configure first.)
-endif
 ifneq ($(VERBOSE), false)
 E = @true
 else

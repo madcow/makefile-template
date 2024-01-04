@@ -13,9 +13,9 @@ set -e
 ROOTDIR=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")
 GCCDIR=/usr/lib/gcc/x86_64-w64-mingw32/12-win32
 LIBDIR=$ROOTDIR/bin/win32
-TESTFILE=$ROOTDIR/.is_configured
+EXPORT=$ROOTDIR/.settings.mk
 
-rm -f "$TESTFILE"
+rm -f "$EXPORT"
 
 if [ "$(uname -m)" != x86_64 ]; then
 	echo "[SH] Error: 64-bit operating system required."
@@ -37,7 +37,13 @@ mkdir -p "$LIBDIR"
 cp -f "$GCCDIR"/{libgcc_s_seh-1,libstdc++-6}.dll "$LIBDIR"
 echo "[SH] Copied required runtime libraries."
 
-# XXX: Call any configuration scripts here.
+OS=WIN32; grep -iq microsoft /proc/version || OS=LINUX
+echo "[SH] Saving build settings to '$EXPORT'."
 
-touch "$TESTFILE"
+# Settings for Make
+cat <<EOF > $EXPORT
+OS := $OS
+EOF
+
+# XXX: Call required scripts and export settings.
 echo "[SH] Build configuration was successful."
