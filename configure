@@ -10,9 +10,10 @@ set -e
 # after a fresh clone. Build settings for install prefix and features will be
 # added as command-line flags later on.
 
+DEPENDS="build-essential mingw-w64 libgl1-mesa-dev"
 ROOTDIR=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")
 GCCDIR=/usr/lib/gcc/x86_64-w64-mingw32/12-win32
-LIBDIR=$ROOTDIR/bin/win32
+WINDIR=$ROOTDIR/bin/win32
 EXPORT=$ROOTDIR/.settings.mk
 
 rm -f "$EXPORT"
@@ -27,14 +28,27 @@ if ! command -v dpkg apt &> /dev/null; then
 	exit 1
 fi
 
+if ! dpkg -s $DEPENDS &> /dev/null; then
+	if [ "$UID" -ne 0 ]; then
+		# Runs whole script again
+		exec sudo bash "$0" "$@"
+	fi
+	if ! apt update -qq || ! apt -y install $DEPENDS; then
+		echo "[CFG] Error: Please locate packages manually."
+		exit 1
+	fi
+fi
+
+echo "[CFG] All dependencies are installed."
+
 # For windows targets we distribute the libgcc and libstdc++ runtime libraries.
 # The sources are made available by the GNU project at https://gcc.gnu.org/git.
 # The GCC Runtime Library Exception covers our use for either static or dynamic
 # linking with both libraries as long as we provide those source files and the
 # terms of the GPLv3 will not extend to our own files.
 
-mkdir -p "$LIBDIR"
-cp -f "$GCCDIR"/{libgcc_s_seh-1,libstdc++-6}.dll "$LIBDIR"
+mkdir -p "$WINDIR"
+cp -f "$GCCDIR"/{libgcc_s_seh-1,libstdc++-6}.dll "$WINDIR"
 echo "[CFG] Copied required runtime libraries."
 
 OS=WIN32; grep -iq microsoft /proc/version || OS=LINUX
