@@ -77,6 +77,11 @@ TAR             ?= tar
 # TOOLCHAIN SYSTEM-SPECIFIC SETTINGS
 # ==============================================================================
 
+# Note we're starting windows applications in console mode because otherwise the
+# process will immediately detach from the console. This means we would have to
+# allocate a new console which in turn opens another terminal window, making it
+# infuriating to use from the shell.
+
 CC_LINUX        ?= x86_64-linux-gnu-gcc
 CC_WIN32        ?= x86_64-w64-mingw32-gcc
 CXX_LINUX       ?= x86_64-linux-gnu-g++
@@ -94,9 +99,9 @@ CFLAGS_WIN32    := $(CFLAGS)
 CXXFLAGS_LINUX  := $(CXXFLAGS)
 CXXFLAGS_WIN32  := $(CXXFLAGS)
 LDFLAGS_LINUX   := $(LDFLAGS)
-LDFLAGS_WIN32   := $(LDFLAGS)
+LDFLAGS_WIN32   := $(LDFLAGS) "-Wl,--subsystem,console"
 LDLIBS_LINUX    := $(LDLIBS)
-LDLIBS_WIN32    := $(LDLIBS)
+LDLIBS_WIN32    := $(LDLIBS) -lgdi32
 MDFLAGS_LINUX    = $(MDFLAGS)
 MDFLAGS_WIN32    = $(MDFLAGS)
 
@@ -112,14 +117,6 @@ CXXFILES_LINUX  := $(CXXFILES) $(shell find "$(SYSDIR)/$(LINUX)" -name "*.cpp" 2
 CXXFILES_WIN32  := $(CXXFILES) $(shell find "$(SYSDIR)/$(WIN32)" -name "*.cpp" 2>/dev/null)
 TMPDIRS         := $(patsubst %,$(TMPDIR)/$(WIN32)/%, $(shell find $(SRCDIR) -type d 2>/dev/null))
 TMPDIRS         += $(patsubst %,$(TMPDIR)/$(LINUX)/%, $(shell find $(SRCDIR) -type d 2>/dev/null))
-
-# Use CC if there are no C++ sources
-ifeq ($(strip $(CXXFILES_LINUX)),)
-LD_LINUX := $(CC_LINUX)
-endif
-ifeq ($(strip $(CXXFILES_WIN32)),)
-LD_WIN32 := $(CC_WIN32)
-endif
 
 # ==============================================================================
 # OBJECT AND DEPENDENCY FILE TARGETS DERIVED FROM SOURCE FILES
@@ -195,9 +192,9 @@ $(TMPDIR)/$(WIN32)/%.d: %.c | $$(@D)
 $(TMPDIR)/$(WIN32)/%.d: %.cpp | $$(@D)
 	$(call MAKEDEP,CXX,WIN32)
 
-# ======================================================================
+# ==============================================================================
 # DIRECTORY TARGETS LIST
-# ======================================================================
+# ==============================================================================
 
 $(SRCDIR)  \
 $(BINDIR)  \
@@ -206,9 +203,9 @@ $(TMPDIRS):
 	$(E) "[DIR] $@"
 	$(Q) $(MKDIR) $@
 
-# ======================================================================
+# ==============================================================================
 # RELEASE AND INSTALL TARGETS
-# ======================================================================
+# ==============================================================================
 
 .PHONY: release
 release: $(RELEASE_LINUX) $(RELEASE_WIN32)
@@ -225,9 +222,9 @@ $(RELEASE_WIN32): $(TARGET_WIN32) | $(DATADIR)
 install: $(TARGET_LINUX) $(TARGET_WIN32)
 	$(E) "No install target yet."
 
-# ======================================================================
+# ==============================================================================
 # AUXILIARY TARGETS
-# ======================================================================
+# ==============================================================================
 
 .PHONY: clean
 clean:
@@ -249,12 +246,21 @@ distclean: clean
 	$(E) "[REM] .settings.mk"
 	$(Q) $(RM) .settings.mk
 
-# ======================================================================
-# PREPROCESSOR INCLUDES AND CONDITIONALS
-# ======================================================================
+# ==============================================================================
+# MAKE PREPROCESSOR INCLUDES AND CONDITIONALS
+# ==============================================================================
 
+# Include generated dependency files
 include $(wildcard $(DEPFILES_LINUX))
 include $(wildcard $(DEPFILES_WIN32))
+# Use CC if there are no C++ sources
+ifeq ($(strip $(CXXFILES_LINUX)),)
+LD_LINUX := $(CC_LINUX)
+endif
+ifeq ($(strip $(CXXFILES_WIN32)),)
+LD_WIN32 := $(CC_WIN32)
+endif
+# Build verbosity setting
 ifneq ($(VERBOSE), false)
 E = @true
 else
