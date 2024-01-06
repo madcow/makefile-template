@@ -118,8 +118,8 @@ MDFLAGS_WIN32       = $(MDFLAGS)
 # illegibility of those defines as they almost look like ancient M4 macros.
 
 define REPLACE_EXT
-$(patsubst %.cpp,$(TMPDIR)/$($(2))/%.$(1),\
-$($(3):%.c=$(TMPDIR)/$($(2))/%.$(1)))
+$(patsubst %.cpp,$(TMPDIR)/$(2)/%.$(1),\
+$($(3):%.c=$(TMPDIR)/$(2)/%.$(1)))
 endef
 
 define FIND
@@ -133,8 +133,8 @@ $(shell find "$(1)" -type d -name "$(2)" -prune -o -type f \
 endef
 
 define FIND_TMPDIRS
-$(patsubst %,$(TMPDIR)/$($(2))/%,\
-$(shell find $($(1)) -type d 2>/dev/null))
+$(patsubst %,$(TMPDIR)/$(2)/%,\
+$(shell find $(1) -type d 2>/dev/null))
 endef
 
 define LINK
@@ -171,10 +171,10 @@ FILES_TESTS_LINUX   := $(FILES_TESTS) $(call FIND,$(TESTDIR)/$(SYSDIR)/$(LINUX))
 FILES_TESTS_WIN32   := $(FILES_TESTS) $(call FIND,$(TESTDIR)/$(SYSDIR)/$(WIN32))
 FILES_LINUX_NOMAIN  := $(filter-out $(SRCDIR)/$(ENTRY),$(FILES_LINUX))
 FILES_WIN32_NOMAIN  := $(filter-out $(SRCDIR)/$(ENTRY),$(FILES_WIN32))
-DIRS_BUILD_TMP      := $(call FIND_TMPDIRS,SRCDIR,LINUX)
-DIRS_BUILD_TMP      += $(call FIND_TMPDIRS,SRCDIR,WIN32)
-DIRS_BUILD_TMP      += $(call FIND_TMPDIRS,TESTDIR,LINUX)
-DIRS_BUILD_TMP      += $(call FIND_TMPDIRS,TESTDIR,WIN32)
+DIRS_BUILD_TMP      := $(call FIND_TMPDIRS,$(SRCDIR),$(LINUX))
+DIRS_BUILD_TMP      += $(call FIND_TMPDIRS,$(SRCDIR),$(WIN32))
+DIRS_BUILD_TMP      += $(call FIND_TMPDIRS,$(TESTDIR),$(LINUX))
+DIRS_BUILD_TMP      += $(call FIND_TMPDIRS,$(TESTDIR),$(WIN32))
 
 # ==============================================================================
 # OBJECT AND DEPENDENCY FILE TARGETS DERIVED FROM SOURCE FILES
@@ -183,18 +183,19 @@ DIRS_BUILD_TMP      += $(call FIND_TMPDIRS,TESTDIR,WIN32)
 # This is basically the heart of the build because it rewrites any sources found
 # above to the object and header dependency files we expect to create from them.
 # We can then set them as prerequisites for the final linker step and they will
-# be compiled according to the pattern rules defined a few sections below.
+# be compiled according to the pattern rules defined a few sections below. It's
+# semantically questionable to include OBJECTS_X in OBJECTS_TESTS_X but ehh.
 
-OBJECTS_LINUX        := $(call REPLACE_EXT,o,LINUX,FILES_LINUX)
-OBJECTS_WIN32        := $(call REPLACE_EXT,o,WIN32,FILES_WIN32)
-OBJECTS_TESTS_LINUX  := $(call REPLACE_EXT,o,LINUX,FILES_TESTS_LINUX)
-OBJECTS_TESTS_LINUX  += $(call REPLACE_EXT,o,LINUX,FILES_LINUX_NOMAIN)
-OBJECTS_TESTS_WIN32  := $(call REPLACE_EXT,o,WIN32,FILES_TESTS_WIN32)
-OBJECTS_TESTS_WIN32  += $(call REPLACE_EXT,o,WIN32,FILES_WIN32_NOMAIN)
-DEPENDS_LINUX        := $(call REPLACE_EXT,d,LINUX,FILES_LINUX)
-DEPENDS_WIN32        := $(call REPLACE_EXT,d,WIN32,FILES_WIN32)
-DEPENDS_TESTS_LINUX  := $(call REPLACE_EXT,d,LINUX,FILES_TESTS_LINUX)
-DEPENDS_TESTS_WIN32  := $(call REPLACE_EXT,d,WIN32,FILES_TESTS_WIN32)
+OBJECTS_LINUX        := $(call REPLACE_EXT,o,$(LINUX),FILES_LINUX)
+OBJECTS_WIN32        := $(call REPLACE_EXT,o,$(WIN32),FILES_WIN32)
+OBJECTS_TESTS_LINUX  := $(call REPLACE_EXT,o,$(LINUX),FILES_TESTS_LINUX)
+OBJECTS_TESTS_LINUX  += $(call REPLACE_EXT,o,$(LINUX),FILES_LINUX_NOMAIN)
+OBJECTS_TESTS_WIN32  := $(call REPLACE_EXT,o,$(WIN32),FILES_TESTS_WIN32)
+OBJECTS_TESTS_WIN32  += $(call REPLACE_EXT,o,$(WIN32),FILES_WIN32_NOMAIN)
+DEPENDS_LINUX        := $(call REPLACE_EXT,d,$(LINUX),FILES_LINUX)
+DEPENDS_WIN32        := $(call REPLACE_EXT,d,$(WIN32),FILES_WIN32)
+DEPENDS_TESTS_LINUX  := $(call REPLACE_EXT,d,$(LINUX),FILES_TESTS_LINUX)
+DEPENDS_TESTS_WIN32  := $(call REPLACE_EXT,d,$(WIN32),FILES_TESTS_WIN32)
 
 # ==============================================================================
 # PRIMARY BUILD TARGETS
