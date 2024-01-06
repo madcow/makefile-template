@@ -164,11 +164,11 @@ endef
 # the list of objects when linking the unit tests.
 
 FILES               := $(call FIND_EXCLUDE,$(SRCDIR),$(SYSDIR))
-FILES_LINUX         := $(FILES) $(call FIND,$(SRCDIR)/$(SYSDIR)/$(LINUX))
-FILES_WIN32         := $(FILES) $(call FIND,$(SRCDIR)/$(SYSDIR)/$(WIN32))
+FILES_LINUX         := $(call FIND,$(SRCDIR)/$(SYSDIR)/$(LINUX)) $(FILES)
+FILES_WIN32         := $(call FIND,$(SRCDIR)/$(SYSDIR)/$(WIN32)) $(FILES)
 FILES_TESTS         := $(call FIND_EXCLUDE,$(TESTDIR),$(SYSDIR))
-FILES_TESTS_LINUX   := $(FILES_TESTS) $(call FIND,$(TESTDIR)/$(SYSDIR)/$(LINUX))
-FILES_TESTS_WIN32   := $(FILES_TESTS) $(call FIND,$(TESTDIR)/$(SYSDIR)/$(WIN32))
+FILES_TESTS_LINUX   := $(call FIND,$(TESTDIR)/$(SYSDIR)/$(LINUX)) $(FILES_TESTS)
+FILES_TESTS_WIN32   := $(call FIND,$(TESTDIR)/$(SYSDIR)/$(WIN32)) $(FILES_TESTS)
 FILES_LINUX_NOMAIN  := $(filter-out $(SRCDIR)/$(ENTRY),$(FILES_LINUX))
 FILES_WIN32_NOMAIN  := $(filter-out $(SRCDIR)/$(ENTRY),$(FILES_WIN32))
 DIRS_BUILD_TMP      := $(call FIND_TMPDIRS,$(SRCDIR),$(LINUX))
@@ -204,13 +204,13 @@ DEPENDS_TESTS_WIN32  := $(call REPLACE_EXT,d,$(WIN32),FILES_TESTS_WIN32)
 .PHONY: all
 all: release check
 
-$(TARGET_LINUX): $(OBJECTS_LINUX) $(DEPENDS_LINUX) | $(SRCDIR) $(BINDIR)
+$(TARGET_LINUX): $(OBJECTS_LINUX) $(DEPENDS_LINUX) | $(BINDIR)
 	$(call LINK,LINUX,OBJECTS_LINUX)
-$(TARGET_WIN32): $(OBJECTS_WIN32) $(DEPENDS_WIN32) | $(SRCDIR) $(BINDIR)
+$(TARGET_WIN32): $(OBJECTS_WIN32) $(DEPENDS_WIN32) | $(BINDIR)
 	$(call LINK,WIN32,OBJECTS_WIN32)
-$(TARGET_LINUX_TEST): $(OBJECTS_TESTS_LINUX) $(DEPENDS_TESTS_LINUX) | $(TESTDIR) $(BINDIR)
+$(TARGET_LINUX_TEST): $(OBJECTS_TESTS_LINUX) $(DEPENDS_TESTS_LINUX) | $(BINDIR)
 	$(call LINK,LINUX,OBJECTS_TESTS_LINUX)
-$(TARGET_WIN32_TEST): $(OBJECTS_TESTS_WIN32) $(DEPENDS_TESTS_WIN32) | $(TESTDIR) $(BINDIR)
+$(TARGET_WIN32_TEST): $(OBJECTS_TESTS_WIN32) $(DEPENDS_TESTS_WIN32) | $(BINDIR)
 	$(call LINK,WIN32,OBJECTS_TESTS_WIN32)
 
 # ==============================================================================
@@ -246,9 +246,7 @@ $(TMPDIR)/$(WIN32)/%.d: %.cpp | $$(@D)
 # DIRECTORY TARGETS LIST
 # ==============================================================================
 
-$(SRCDIR)  \
 $(BINDIR)  \
-$(TESTDIR) \
 $(DATADIR) \
 $(DIRS_BUILD_TMP):
 	$(E) "[DIR] $@"
@@ -262,7 +260,9 @@ $(DIRS_BUILD_TMP):
 # Skip check stage if no unit test sources were found
 ifneq ($(strip $(FILES_TESTS_LINUX) $(FILES_TESTS_WIN32)),)
 check: $(TARGET_LINUX_TEST) $(TARGET_WIN32_TEST)
+	$(E) "[RUN] $(TARGET_LINUX_TEST)"
 	$(Q) $(TARGET_LINUX_TEST)
+	$(E) "[RUN] $(TARGET_WIN32_TEST)"
 	$(Q) $(TARGET_WIN32_TEST)
 else
 check:
