@@ -1,27 +1,18 @@
 .DELETE_ON_ERROR:
 .SUFFIXES:
 
-# Build Configuration
+# Makefile
 # Written by Leon Krieg <info@madcow.dev>
 
-# Run ./configure once after cloning the repository to ensure your environment
-# is properly set up. The build system will compile C and C++ sources from the
-# SRCDIR and link the resulting object files as both linux and win32 binaries.
-# Plain C sources are compiled with gcc and the appropriate linker is selected
-# based on if there are any C++ source files in SRCDIR. Build related files are
-# placed in TMPDIR and dependencies from included headers are generated using
-# the preprocessor. Run 'make release' to create tarballs for all systems.
+# Please run ./configure once before invoking make to ensure the environment is
+# properly set up. The build system will by default compile any C and C++ source
+# files found in SRCDIR for both Linux and Windows and then link the resulting
+# object files with the appropriate linker. All temporary build files are placed
+# in TMPDIR. The release target will generate tarballs containing the binaries,
+# assets from DATADIR and the gcc runtime libraries required for windows.
 
 ifeq ($(wildcard .settings.mk),)
-$(error Please run ./configure first.)
-endif
-
-include .settings.mk
-ifeq ($(OS),WIN32)
-# Windows with WSL
-endif
-ifeq ($(OS),LINUX)
-# Native Linux
+$(error Please run ./configure first)
 endif
 
 # ==============================================================================
@@ -29,24 +20,24 @@ endif
 # ==============================================================================
 
 # PROJECT       Project identifier.
-# VERBOSE       Show full text for every command?
-# SRCDIR        Location of C and C++ source files.
-# SYSDIR        Location of platform-dependend source files.
-# LINUX         Subdirectory of SYSDIR, tarball suffix, etc.
-# WIN32         Subdirectory of SYSDIR, tarball suffix, etc.
-# BINDIR        Binaries and dynamic libraries.
-# DATADIR       Data files to be copied into tarball.
-# TMPDIR        Objects and header dependency files.
+# VERBOSE       Show full command text? Boolean.
+# SRCDIR        C and C++ source files directory.
+# SYSDIR        Platform-dependend source files directory.
+# BINDIR        Binaries and shared libraries output directory.
+# DATADIR       Optional data files to be copied into the tarball.
+# TMPDIR        Temporary object and header dependencies directory.
+# LINUX         Linux subdirectory of SYSDIR, tarball suffix, etc.
+# WIN32         Win32 subdirectory of SYSDIR, tarball suffix, etc.
 
 PROJECT         := template
 VERBOSE         := false
 SRCDIR          := src
 SYSDIR          := src/system
-LINUX           := linux
-WIN32           := win32
 BINDIR          := bin
 DATADIR         := data
 TMPDIR          := build
+LINUX           := linux
+WIN32           := win32
 
 # ==============================================================================
 # TOOLCHAIN GENERAL SETTINGS
@@ -54,12 +45,12 @@ TMPDIR          := build
 
 # WFLAGS        Compiler error flags.
 # CPPFLAGS      Shared preprocessor flags.
-# CFLAGS        Compiler flags for C excluding error settings.
-# CXXFLAGS      Compiler flags for C++ excluding error settings.
+# CFLAGS        Compiler flags for C including error flags.
+# CXXFLAGS      Compiler flags for C++ including error flags.
 # MDFLAGS       Automatic preprocessor header dependency flags.
-# LDFLAGS       Linker settings, passed to compiler - not ld.
-# LDLIBS        Required linker library imports.
-# POSIXDEF      POSIX version to use on linux.
+# LDFLAGS       Linker settings passed to compiler - not ld.
+# LDLIBS        Linker library imports.
+# POSIXDEF      POSIX version on linux.
 
 WFLAGS          := -Wall -Wextra -Werror
 CPPFLAGS        := -DDEBUG -I$(SRCDIR)
@@ -77,10 +68,11 @@ TAR             ?= tar
 # TOOLCHAIN SYSTEM-SPECIFIC SETTINGS
 # ==============================================================================
 
-# Note we're starting windows applications in console mode because otherwise the
-# process will immediately detach from the console. This means we would have to
-# allocate a new console which in turn opens another terminal window, making it
-# infuriating to use from the shell.
+# Note we're adding the console subsystem flag to windows applications because
+# otherwise the process will immediately detach from the console meaning we have
+# to allocate a new console. This opens a separate window making it miserable to
+# use from the shell and also requires us to set up the stream descriptors. This
+# is more work than jumping to GUI mode from a console application.
 
 CC_LINUX        ?= x86_64-linux-gnu-gcc
 CC_WIN32        ?= x86_64-w64-mingw32-gcc
@@ -109,6 +101,11 @@ MDFLAGS_WIN32    = $(MDFLAGS)
 # SOURCE FILE LISTS
 # ==============================================================================
 
+# Automatically scanning for required sources instead of having to list them all
+# by hand is my primary reason for preferring the GNU make implementation over
+# the POSIX standard. But the way system directories are excluded could still be
+# improved because the wildcard globbing will wastefully iterate through them.
+
 CFILES          := $(shell find "$(SRCDIR)" -name "*.c" -not -path "$(SYSDIR)/*" 2>/dev/null)
 CFILES_LINUX    := $(CFILES) $(shell find "$(SYSDIR)/$(LINUX)" -name "*.c" 2>/dev/null)
 CFILES_WIN32    := $(CFILES) $(shell find "$(SYSDIR)/$(WIN32)" -name "*.c" 2>/dev/null)
@@ -122,6 +119,11 @@ TMPDIRS         += $(patsubst %,$(TMPDIR)/$(LINUX)/%, $(shell find $(SRCDIR) -ty
 # OBJECT AND DEPENDENCY FILE TARGETS DERIVED FROM SOURCE FILES
 # ==============================================================================
 
+# This is basically the heart of the build because it rewrites any sources found
+# above to the object and header dependency files we expect to create from them.
+# We can then set them as prerequisites for the final linker step and they will
+# be compiled according to the pattern rules defined a few sections below.
+
 OBJFILES_LINUX  := $(CFILES_LINUX:%.c=$(TMPDIR)/$(LINUX)/%.o)
 OBJFILES_LINUX  += $(CXXFILES_LINUX:%.cpp=$(TMPDIR)/$(LINUX)/%.o)
 OBJFILES_WIN32  := $(CFILES_WIN32:%.c=$(TMPDIR)/$(WIN32)/%.o)
@@ -134,6 +136,10 @@ DEPFILES_WIN32  += $(CXXFILES_WIN32:%.cpp=$(TMPDIR)/$(WIN32)/%.d)
 # ==============================================================================
 # HELPER MACROS (EVALUATE TO FINAL COMPILER AND LINKER COMMANDS)
 # ==============================================================================
+
+# These helper macros are here to reduce the amount of boilerplace code for the
+# following rules below. They are simple variable substitutions to select the
+# tools and flags for the target operating system.
 
 define LINK
 $(E) "[BIN] $@"; $(MKDIR) $(@D)
@@ -167,7 +173,7 @@ $(TARGET_LINUX): $(OBJFILES_LINUX) $(DEPFILES_LINUX) | $(SRCDIR) $(BINDIR)
 # PATTERN RULES
 # ==============================================================================
 
-# Must expand the prerequisite lists a second time to resolve the path variable
+# We must expand the prerequisite lists a second time to resolve path variable
 # $(@D). This means folders can be set as explicit dependencies and created in
 # the $TMPDIRS rule. This is better than relying on Make to honor the order of
 # prerequisites for the primary target and we will not have to call mkdir for
@@ -250,7 +256,9 @@ distclean: clean
 # MAKE PREPROCESSOR INCLUDES AND CONDITIONALS
 # ==============================================================================
 
-# Include generated dependency files
+# Exported settings
+include .settings.mk
+# Generated header dependency files
 include $(wildcard $(DEPFILES_LINUX))
 include $(wildcard $(DEPFILES_WIN32))
 # Use CC if there are no C++ sources
@@ -266,4 +274,10 @@ E = @true
 else
 E = @echo
 Q = @
+endif
+ifeq ($(OS),WIN32)
+# Windows with WSL
+endif
+ifeq ($(OS),LINUX)
+# Native Linux
 endif
