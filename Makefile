@@ -24,54 +24,54 @@ endif
 # PROJECT SETTINGS
 # ==============================================================================
 
-# PROJECT       Project identifier.
-# VERBOSE       Show full command text? Boolean.
-# SRCDIR        C and C++ source files directory.
-# SYSDIR        Platform-dependend source files directory.
-# BINDIR        Binaries and shared libraries output directory.
-# DATADIR       Optional data files to be copied into the tarball.
-# TESTDIR       Optional unit tests for regular and system sources.
-# TMPDIR        Temporary object and header dependencies directory.
-# ENTRY         File in SRCDIR which declares the main() function.
-# LINUX         Linux subdirectory of SYSDIR, tarball suffix, etc.
-# WIN32         Win32 subdirectory of SYSDIR, tarball suffix, etc.
+# PROJECT  Project identifier.
+# VERBOSE  Show full command text? Boolean.
+# SRCDIR   C and C++ source files directory.
+# SYSDIR   Platform-dependend source files directory.
+# BINDIR   Binaries and shared libraries output directory.
+# DATADIR  Optional data files to be copied into the tarball.
+# TESTDIR  Optional unit tests for regular and system sources.
+# TMPDIR   Temporary object and header dependencies directory.
+# ENTRY    File in SRCDIR which declares the main() function.
+# LINUX    Linux subdirectory of SYSDIR, tarball suffix, etc.
+# WIN32    Win32 subdirectory of SYSDIR, tarball suffix, etc.
 
-PROJECT         := template
-VERBOSE         := false
-SRCDIR          := src
-SYSDIR          := system
-BINDIR          := bin
-DATADIR         := data
-TESTDIR         := tests
-TMPDIR          := build
-ENTRY           := main.c
-LINUX           := linux
-WIN32           := win32
+PROJECT    := template
+VERBOSE    := false
+SRCDIR     := src
+SYSDIR     := system
+BINDIR     := bin
+DATADIR    := data
+TESTDIR    := tests
+TMPDIR     := build
+ENTRY      := main.c
+LINUX      := linux
+WIN32      := win32
 
 # ==============================================================================
 # TOOLCHAIN GENERAL SETTINGS
 # ==============================================================================
 
-# WFLAGS        Compiler error flags.
-# CPPFLAGS      Shared preprocessor flags.
-# CFLAGS        Compiler flags for C including error flags.
-# CXXFLAGS      Compiler flags for C++ including error flags.
-# MDFLAGS       Automatic preprocessor header dependency flags.
-# LDFLAGS       Linker settings passed to compiler - not ld.
-# LDLIBS        Linker library imports.
-# POSIXDEF      POSIX version on linux.
+# WFLAGS    Compiler error flags.
+# CPPFLAGS  Shared preprocessor flags.
+# CFLAGS    Compiler flags for C including error flags.
+# CXXFLAGS  Compiler flags for C++ including error flags.
+# MDFLAGS   Automatic preprocessor header dependency flags.
+# LDFLAGS   Linker settings passed to compiler - not ld.
+# LDLIBS    Linker library imports.
+# POSIXDEF  POSIX version on linux.
 
-WFLAGS          := -Wall -Wextra -Werror
-CPPFLAGS        := -DDEBUG -I$(SRCDIR)
-CFLAGS          := -std=c99 -pedantic $(WFLAGS)
-CXXFLAGS        := -std=c++98 -pedantic $(WFLAGS)
-MDFLAGS          = -MM -MT $(@:.d=.o)
-LDFLAGS         :=
-LDLIBS          :=
-POSIXDEF        := 200112L
-MKDIR           ?= mkdir -p
-RM              ?= rm -f
-TAR             ?= tar
+WFLAGS      := -Wall -Wextra -Werror
+CPPFLAGS    := -DDEBUG -I$(SRCDIR)
+CFLAGS      := -std=c99 -pedantic $(WFLAGS)
+CXXFLAGS    := -std=c++98 -pedantic $(WFLAGS)
+MDFLAGS      = -MM -MT $(@:.d=.o)
+LDFLAGS     :=
+LDLIBS      :=
+POSIXDEF    := 200112L
+MKDIR       ?= mkdir -p
+RM          ?= rm -f
+TAR         ?= tar
 
 # ==============================================================================
 # TOOLCHAIN SYSTEM-SPECIFIC SETTINGS
