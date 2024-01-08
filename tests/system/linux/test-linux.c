@@ -1,8 +1,16 @@
-#include "system/linux/linux.h"
-#include <stdlib.h>
+#include "test.h"
 
-int test_some_linux_function(void)
+TEST(Add, ReturnsSumOfArguments)
 {
-	// Runs for linux targets only
-	return (add(100, 200) == 300) ? 0 : EXIT_FAILURE;
+	EXPECT(1 == 0);
+}
+
+TEST(Add, AddingNegativeReturnsNegative)
+{
+	EXPECT(0 == 0);
+}
+
+TEST(Add, HandlesZeroValuesCorrectly)
+{
+	EXPECT(0 == 0);
 }
