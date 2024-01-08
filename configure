@@ -13,6 +13,7 @@ set -e
 DEPENDS="build-essential mingw-w64 libgl1-mesa-dev"
 ROOTDIR=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")
 GCCDIR=/usr/lib/gcc/x86_64-w64-mingw32/12-win32
+MGWDIR=/usr/x86_64-w64-mingw32/lib
 WINDIR=$ROOTDIR/bin/win32
 EXPORT=$ROOTDIR/.settings.mk
 
@@ -41,7 +42,7 @@ fi
 
 echo "[CFG] All dependencies are installed."
 
-# For windows targets we distribute the libgcc and libstdc++ runtime libraries.
+# For windows targets we distribute the libstdc++ runtime and pthread libraries.
 # The sources are made available by the GNU project at https://gcc.gnu.org/git.
 # The GCC Runtime Library Exception covers our use for either static or dynamic
 # linking with both libraries as long as we provide those source files and the
@@ -49,6 +50,7 @@ echo "[CFG] All dependencies are installed."
 
 mkdir -p "$WINDIR"
 cp -f "$GCCDIR"/{libgcc_s_seh-1,libstdc++-6}.dll "$WINDIR"
+cp -f "$MGWDIR"/libwinpthread-1.dll "$WINDIR"
 echo "[CFG] Copied required runtime libraries."
 
 OS=WIN32; grep -iq microsoft /proc/version || OS=LINUX

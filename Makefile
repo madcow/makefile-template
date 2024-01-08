@@ -52,23 +52,25 @@ WIN32      := win32
 # TOOLCHAIN GENERAL SETTINGS
 # ==============================================================================
 
-# WFLAGS    Compiler error flags.
+# OPTIMIZE  Compiler optimization level.
+# POSIXDEF  POSIX version to use on linux.
+# WFLAGS    Shared compiler error flags.
 # CPPFLAGS  Shared preprocessor flags.
 # CFLAGS    Compiler flags for C including error flags.
 # CXXFLAGS  Compiler flags for C++ including error flags.
 # MDFLAGS   Automatic preprocessor header dependency flags.
 # LDFLAGS   Linker settings passed to compiler - not ld.
 # LDLIBS    Linker library imports.
-# POSIXDEF  POSIX version on linux.
 
-WFLAGS      := -Wall -Wextra -Werror
-CPPFLAGS    := -DDEBUG -I$(SRCDIR)
-CFLAGS      := -std=c99 -pedantic $(WFLAGS)
-CXXFLAGS    := -std=c++98 -pedantic $(WFLAGS)
-MDFLAGS      = -MM -MT $(@:.d=.o)
-LDFLAGS     :=
-LDLIBS      :=
+OPTIMIZE    := 0
 POSIXDEF    := 200112L
+WFLAGS      := -pedantic -Wall -Wextra -Werror
+CPPFLAGS    := -DDEBUG -I$(SRCDIR) -I$(TESTDIR) # XXX
+CFLAGS      := -std=c99 $(WFLAGS) -O$(OPTIMIZE) -pthread
+CXXFLAGS    := -std=c++98 $(WFLAGS) -O$(OPTIMIZE) -pthread
+MDFLAGS      = -MM -MT $(@:.d=.o)
+LDFLAGS     := -pthread
+LDLIBS      :=
 MKDIR       ?= mkdir -p
 RM          ?= rm -f
 TAR         ?= tar

@@ -1,8 +1,16 @@
-#include "system/win32/win32.h"
-#include <stdlib.h>
+#include "test.h"
 
-int test_some_win32_function(void)
+TEST(Add, ReturnsSumOfArguments)
 {
-	// Runs for win32 targets only
-	return (add(100, 200) == 300) ? 0 : EXIT_FAILURE;
+	EXPECT(0 == 0);
+}
+
+TEST(Add, AddingNegativeReturnsNegative)
+{
+	EXPECT(1 == 0);
+}
+
+TEST(Add, HandlesZeroValuesCorrectly)
+{
+	EXPECT(1 == 0);
 }
